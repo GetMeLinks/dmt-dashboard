@@ -18,6 +18,7 @@ var CACHE_TTL = 3600; // 1 hour
 // BASIC HELPERS
 // ============================================================
 
+
 function normalizeProspector(name) {
   if (!name) return name;
 
@@ -49,10 +50,48 @@ function inRange(cell, from, to) {
 // ============================================================
 // WEB / PUBLIC WRAPPERS
 // ============================================================
+var SPREADSHEET_ID = "1cwuTZkNZmAeWfQ_DycLX-Lz04zY1mPvfrnoOG-sfRc0";
+var CACHE_KEY = "outreach_dashboard_data";
+var CACHE_TTL = 3600;
 
-function doGetOutreach(e) {
-  return HtmlService.createHtmlOutputFromFile('DMTDashboard')
-    .setTitle('GML Data Management Team Dashboard')
+function doGet(e) {
+  try {
+    var action = (e && e.parameter && e.parameter.action) ? e.parameter.action : "";
+    var from = (e && e.parameter && e.parameter.from) ? e.parameter.from : "";
+    var to = (e && e.parameter && e.parameter.to) ? e.parameter.to : "";
+
+    var result;
+
+    if (action === "getData") {
+      result = getData(from, to);
+    } else if (action === "getProspectorBreakdown") {
+      if (typeof getProspectorBreakdown !== "function") {
+        result = { error: "getProspectorBreakdown is not defined in Apps Script." };
+      } else {
+        result = getProspectorBreakdown(from, to);
+      }
+    } else if (action === "ping") {
+      result = { ok: true, message: "API is working" };
+    } else {
+      result = { error: "Invalid action" };
+    }
+
+    return ContentService
+      .createTextOutput(JSON.stringify(result))
+      .setMimeType(ContentService.MimeType.JSON);
+
+  } catch (err) {
+    return ContentService
+      .createTextOutput(JSON.stringify({
+        error: err && err.message ? err.message : String(err)
+      }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function doGetOutreach() {
+  return HtmlService.createHtmlOutputFromFile("DMTDashboard")
+    .setTitle("GML Data Management Team Dashboard")
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
@@ -62,11 +101,13 @@ function getData(dateFrom, dateTo) {
 
 function getOutreachData(dateFromStr, dateToStr) {
   var cache = CacheService.getScriptCache();
-  var dateKey = CACHE_KEY + '_' + (dateFromStr || 'any') + '_' + (dateToStr || 'any');
+  var dateKey = CACHE_KEY + "_" + (dateFromStr || "any") + "_" + (dateToStr || "any");
 
   var cached = cache.get(dateKey);
   if (cached) {
-    try { return JSON.parse(cached); } catch (e) {}
+    try {
+      return JSON.parse(cached);
+    } catch (e) {}
   }
 
   var result = buildOutreachData(dateFromStr, dateToStr);
@@ -77,11 +118,6 @@ function getOutreachData(dateFromStr, dateToStr) {
 
   return result;
 }
-
-function clearOutreachCache() {
-  CacheService.getScriptCache().remove(CACHE_KEY);
-}
-
 
 
 // ============================================================
