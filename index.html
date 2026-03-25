@@ -886,9 +886,6 @@
   </div>
 
   <script>
-
-    var API_URL = 'https://script.google.com/a/macros/getmelinks.com/s/AKfycbyc8WOAcDAAsPepCS_bWBFdZeZu2vZRF9NqwskYjOOdIZ08YRITuUDxcnI_EoC7jT4r/exec';
-
     // =========================================================
     // GLOBAL STATE
     // =========================================================
@@ -1367,49 +1364,49 @@
     // =========================================================
     // DATA ACTIONS
     // =========================================================
-        function applyFilter() {
-      var from = document.getElementById('dateFrom').value;
-      var to   = document.getElementById('dateTo').value;
-      var btn  = document.getElementById('applyBtn');
+    function applyFilter() {
+  var from = document.getElementById('dateFrom').value;
+  var to   = document.getElementById('dateTo').value;
+  var btn  = document.getElementById('applyBtn');
 
-      if (btn) { btn.textContent = 'Applying...'; btn.disabled = true; }
+  pbLoaded = false; pbData = null; pbSelectedProsp = null;
+  if (btn) { btn.textContent = 'Applying...'; btn.disabled = true; }
 
-      fetch(API_URL + '?action=getData&dateFrom=' + encodeURIComponent(from) + '&dateTo=' + encodeURIComponent(to))
-        .then(function(res) { return res.json(); })
-        .then(function(data) {
-          render(data);
-          if (activeTab === 'prosp-breakdown') renderProspectorBreakdown(data.prospectors);
-          if (btn) { btn.textContent = 'Apply Filter'; btn.disabled = false; }
-          scheduleRefresh();
-        })
-        .catch(function(err) {
-          if (btn) { btn.textContent = 'Apply Filter'; btn.disabled = false; }
-          console.error('Filter error:', err);
-        });
-    }
+  fetch(API_URL + '?action=getData&dateFrom=' + encodeURIComponent(from) + '&dateTo=' + encodeURIComponent(to))
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+      render(data);
+      if (activeTab === 'prosp-breakdown') renderProspectorBreakdown(data.prospectors);
+      if (btn) { btn.textContent = 'Apply Filter'; btn.disabled = false; }
+      scheduleRefresh();
+    })
+    .catch(function(err) {
+      if (btn) { btn.textContent = 'Apply Filter'; btn.disabled = false; }
+      console.error('Filter error:', err);
+    });
+}
 
 
-        function refreshData() {
-      var from = document.getElementById('dateFrom').value;
-      var to   = document.getElementById('dateTo').value;
-      var btn  = document.getElementById('btnRefresh');
+   function refreshData() {
+  var from = document.getElementById('dateFrom').value;
+  var to   = document.getElementById('dateTo').value;
+  var btn  = document.getElementById('btnRefresh');
 
-      if (btn) { btn.textContent = 'Refreshing...'; btn.disabled = true; }
+  if (btn) { btn.textContent = 'Refreshing...'; btn.disabled = true; }
 
-      fetch(API_URL + '?action=getDataFresh&dateFrom=' + encodeURIComponent(from) + '&dateTo=' + encodeURIComponent(to))
-        .then(function(res) { return res.json(); })
-        .then(function(data) {
-          render(data);
-          if (activeTab === 'prosp-breakdown') renderProspectorBreakdown(data.prospectors);
-          if (btn) { btn.textContent = '↺ Refresh'; btn.disabled = false; }
-          scheduleRefresh();
-        })
-        .catch(function(err) {
-          if (btn) { btn.textContent = '↺ Refresh'; btn.disabled = false; }
-          console.error('Refresh error:', err);
-        });
-    }
-
+  fetch(API_URL + '?action=getDataFresh&dateFrom=' + encodeURIComponent(from) + '&dateTo=' + encodeURIComponent(to))
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+      render(data);
+      if (activeTab === 'prosp-breakdown') renderProspectorBreakdown(data.prospectors);
+      if (btn) { btn.textContent = '↺ Refresh'; btn.disabled = false; }
+      scheduleRefresh();
+    })
+    .catch(function(err) {
+      if (btn) { btn.textContent = '↺ Refresh'; btn.disabled = false; }
+      console.error('Refresh error:', err);
+    });
+}
 
     function scheduleRefresh() {
       if (refreshTimer) clearTimeout(refreshTimer);
@@ -1477,35 +1474,21 @@
     // PROSPECTOR BREAKDOWN — FETCH DATA
     // =========================================================
     function loadProspectorBreakdown() {
-      if (pbLoaded && pbData) {
-        renderPBPage(pbData);
-        return;
-      }
+  var pbLoading = document.getElementById('pbLoading');
+  var pbInner   = document.getElementById('pbInner');
 
-      var loadingEl = document.getElementById('pbLoading');
-      var innerEl   = document.getElementById('pbInner');
-      if (loadingEl) loadingEl.style.display = 'block';
-      if (innerEl)   innerEl.style.display   = 'none';
+  if (!gData || !gData.prospectors || !gData.prospectors.length) {
+    if (pbLoading) { pbLoading.style.display = 'block'; pbLoading.textContent = 'No prospector data found for this date range.'; }
+    if (pbInner)   pbInner.style.display = 'none';
+    return;
+  }
 
-      var from = document.getElementById('dateFrom') ? document.getElementById('dateFrom').value : '';
-      var to   = document.getElementById('dateTo')   ? document.getElementById('dateTo').value   : '';
+  if (pbLoading) pbLoading.style.display = 'none';
+  if (pbInner)   pbInner.style.display = 'block';
 
-      google.script.run
-        .withSuccessHandler(function(data) {
-          if (data && data.error) {
-            if (loadingEl) loadingEl.textContent = 'Error: ' + data.error;
-            return;
-          }
-          pbData   = data;
-          pbLoaded = true;
-          if (loadingEl) loadingEl.style.display = 'none';
-          renderPBPage(data);
-        })
-        .withFailureHandler(function(err) {
-          if (loadingEl) loadingEl.textContent = 'Failed to load: ' + err.message;
-        })
-        .getProspectorBreakdown(from, to);
-    }
+  renderProspectorBreakdown(gData.prospectors);
+}
+
 
     // =========================================================
     // PROSPECTOR BREAKDOWN — RENDER
@@ -1658,6 +1641,118 @@
         '<div class="pb-stat-value">' + esc(String(value)) + '</div>' +
         '</div>';
     }
+
+    function renderProspectorBreakdown(prospectors) {
+  var pbLoading = document.getElementById('pbLoading');
+  var pbInner   = document.getElementById('pbInner');
+  var cardRow   = document.getElementById('pbCardRow');
+
+  if (!prospectors || !prospectors.length) {
+    if (pbLoading) { pbLoading.style.display = 'block'; pbLoading.textContent = 'No prospector data found for this date range.'; }
+    if (pbInner)   pbInner.style.display = 'none';
+    return;
+  }
+
+  if (pbLoading) pbLoading.style.display = 'none';
+  if (pbInner)   pbInner.style.display = 'block';
+
+  if (cardRow) {
+    cardRow.innerHTML = '';
+    prospectors.forEach(function(p) {
+      var card = document.createElement('div');
+      card.className = 'pb-prosp-card' + (pbSelectedProsp === p.name ? ' active' : '');
+      card.id = 'pbcard-' + p.name.replace(/\s+/g, '-');
+      card.innerHTML =
+        '<div class="pb-card-name">' + esc(p.name) + '</div>' +
+        '<div class="pb-card-sent">' + p.sent + ' campaigns created</div>';
+      card.onclick = (function(name) {
+        return function() { selectPBFromProspectors(name); };
+      })(p.name);
+      cardRow.appendChild(card);
+    });
+  }
+
+  var toSelect = pbSelectedProsp || (prospectors.length ? prospectors[0].name : null);
+  if (toSelect) selectPBFromProspectors(toSelect);
+}
+
+function selectPBFromProspectors(name) {
+  pbSelectedProsp = name;
+  var prospectors = gData.prospectors || [];
+
+  prospectors.forEach(function(p) {
+    var card = document.getElementById('pbcard-' + p.name.replace(/\s+/g, '-'));
+    if (card) card.classList.toggle('active', p.name === name);
+  });
+
+  var prosp = null;
+  for (var i = 0; i < prospectors.length; i++) {
+    if (prospectors[i].name === name) { prosp = prospectors[i]; break; }
+  }
+  if (!prosp) return;
+
+  // Fix: _rawCampaignsByProspector is an array of {name, rows}, not a plain object
+  var rawEntry = (gData._rawCampaignsByProspector || []).filter(function(p) { return p.name === name; })[0];
+  var campaigns = rawEntry ? rawEntry.rows : [];
+
+  // Build niche rows
+  var nicheMap = {};
+  campaigns.forEach(function(c) {
+    var niche = String(c.niche || '').trim() || 'Unknown';
+    if (!nicheMap[niche]) nicheMap[niche] = { niche: niche, sent: 0, launchEmails: 0, replies: 0, positive: 0, negative: 0 };
+    nicheMap[niche].sent++;
+    nicheMap[niche].launchEmails += (c.launchEmails || 0);
+    var st = String(c.status || '').toLowerCase();
+    if (st === 'completed') nicheMap[niche].replies++;
+    if (st === 'active')    nicheMap[niche].positive++;
+  });
+  var nicheRows = Object.keys(nicheMap).map(function(n) {
+    var r = nicheMap[n];
+    r.negative = Math.max(0, r.sent - r.replies - r.positive);
+    r.replyRate = r.sent ? Math.round((r.replies / r.sent) * 100) : 0;
+    return r;
+  }).sort(function(a, b) { return b.sent - a.sent; });
+
+  // Build email rows from campaign emailAddress field
+  var emailMap = {};
+  campaigns.forEach(function(c) {
+    var email = String(c.emailAddress || '').trim();
+    if (!email) return;
+    if (!emailMap[email]) emailMap[email] = { emailAddress: email, timesUsed: 0, nicheSet: {}, replies: 0, sent: 0 };
+    emailMap[email].timesUsed++;
+    emailMap[email].sent++;
+    if (c.niche) emailMap[email].nicheSet[c.niche] = true;
+    if (String(c.status || '').toLowerCase() === 'completed') emailMap[email].replies++;
+  });
+  var emailRows = Object.keys(emailMap).map(function(email) {
+    var e = emailMap[email];
+    return {
+      emailAddress: e.emailAddress,
+      timesUsed: e.timesUsed,
+      niches: Object.keys(e.nicheSet).sort().join(', '),
+      replyRate: e.sent ? Math.round((e.replies / e.sent) * 100) : 0,
+      overused: e.timesUsed >= 3
+    };
+  }).sort(function(a, b) { return b.timesUsed - a.timesUsed; });
+
+  var p = {
+    name:              prosp.name,
+    totalSent:         prosp.sent         || 0,
+    totalLaunchEmails: prosp.launchEmails || 0,
+    totalReplies:      prosp.replies      || 0,
+    overallReplyRate:  prosp.replyRate    || 0,
+    uniqueEmails:      emailRows.length,
+    nicheCount:        nicheRows.length,
+    emailRows:         emailRows,
+    nicheRows:         nicheRows
+  };
+
+  var detail = document.getElementById('pbDetail');
+  if (!detail) return;
+  detail.innerHTML = renderPBDetail(p);
+  initAllPagination();
+}
+
   </script>
 </body>
 </html>
