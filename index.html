@@ -1425,58 +1425,49 @@
       // =========================================================
       // DATA ACTIONS
       // =========================================================
-  var API_BASE = "https://script.google.com/a/macros/getmelinks.com/s/AKfycbyc8WOAcDAAsPepCS_bWBFdZeZu2vZRF9NqwskYjOOdIZ08YRITuUDxcnI_EoC7jT4r/exec";
+      function applyFilter() {
+        pbLoaded = false;
+        pbData = null;
+        pbSelectedProsp = null;
 
-  function applyFilter() {
-    pbLoaded = false;
-    pbData = null;
-    pbSelectedProsp = null;
-
-    if (typeof activeTab !== "undefined" && activeTab === "prosp-breakdown") {
-      loadProspectorBreakdown();
-    }
-
-    var from = document.getElementById("dateFrom").value;
-    var to = document.getElementById("dateTo").value;
-    var btn = document.getElementById("applyBtn");
-
-    if (btn) {
-      btn.textContent = "Applying...";
-      btn.disabled = true;
-    }
-
-    fetch(
-      API_BASE +
-        "?action=getData&from=" +
-        encodeURIComponent(from) +
-        "&to=" +
-        encodeURIComponent(to)
-    )
-      .then(function (res) {
-        if (!res.ok) throw new Error("HTTP " + res.status);
-        return res.json();
-      })
-      .then(function (data) {
-        render(data);
-
-        if (btn) {
-          btn.textContent = "Apply Filter";
-          btn.disabled = false;
+        if (typeof activeTab !== "undefined" && activeTab === "prosp-breakdown") {
+          loadProspectorBreakdown();
         }
 
-        scheduleRefresh();
-      })
-      .catch(function (err) {
+        var from = document.getElementById("dateFrom").value;
+        var to = document.getElementById("dateTo").value;
+        var btn = document.getElementById("applyBtn");
+
         if (btn) {
-          btn.textContent = "Apply Filter";
-          btn.disabled = false;
+          btn.textContent = "Applying...";
+          btn.disabled = true;
         }
 
-        console.error("Filter error:", err);
-        document.getElementById("mainContent").innerHTML =
-          '<div class="loading">Failed to load dashboard data.</div>';
-      });
-  }
+        google.script.run
+          .withSuccessHandler(function (data) {
+            render(data);
+
+            if (btn) {
+              btn.textContent = "Apply Filter";
+              btn.disabled = false;
+            }
+
+            scheduleRefresh();
+          })
+          .withFailureHandler(function (err) {
+            if (btn) {
+              btn.textContent = "Apply Filter";
+              btn.disabled = false;
+            }
+
+            console.error("Filter error:", err);
+          })
+          .getData(from, to);
+      }
+
+      function refreshData() {
+        applyFilter();
+      }
 
       function scheduleRefresh() {
         if (refreshTimer) clearTimeout(refreshTimer);
@@ -1540,52 +1531,43 @@
       // =========================================================
       // PROSPECTOR BREAKDOWN — FETCH DATA
       // =========================================================
-     function loadProspectorBreakdown() {
-  if (pbLoaded && pbData) {
-    renderPBPage(pbData);
-    return;
-  }
+      function loadProspectorBreakdown() {
+        if (pbLoaded && pbData) {
+          renderPBPage(pbData);
+          return;
+        }
 
-  var loadingEl = document.getElementById("pbLoading");
-  var innerEl = document.getElementById("pbInner");
+        var loadingEl = document.getElementById("pbLoading");
+        var innerEl = document.getElementById("pbInner");
 
-  if (loadingEl) loadingEl.style.display = "block";
-  if (innerEl) innerEl.style.display = "none";
+        if (loadingEl) loadingEl.style.display = "block";
+        if (innerEl) innerEl.style.display = "none";
 
-  var from = document.getElementById("dateFrom")
-    ? document.getElementById("dateFrom").value
-    : "";
-  var to = document.getElementById("dateTo")
-    ? document.getElementById("dateTo").value
-    : "";
+        var from = document.getElementById("dateFrom")
+          ? document.getElementById("dateFrom").value
+          : "";
+        var to = document.getElementById("dateTo")
+          ? document.getElementById("dateTo").value
+          : "";
 
-  fetch(
-    API_BASE +
-      "?action=getProspectorBreakdown&from=" +
-      encodeURIComponent(from) +
-      "&to=" +
-      encodeURIComponent(to)
-  )
-    .then(function (res) {
-      if (!res.ok) throw new Error("HTTP " + res.status);
-      return res.json();
-    })
-    .then(function (data) {
-      if (data && data.error) {
-        if (loadingEl) loadingEl.textContent = "Error: " + data.error;
-        return;
+        google.script.run
+          .withSuccessHandler(function (data) {
+            if (data && data.error) {
+              if (loadingEl) loadingEl.textContent = "Error: " + data.error;
+              return;
+            }
+
+            pbData = data;
+            pbLoaded = true;
+
+            if (loadingEl) loadingEl.style.display = "none";
+            renderPBPage(data);
+          })
+          .withFailureHandler(function (err) {
+            if (loadingEl) loadingEl.textContent = "Failed to load: " + err.message;
+          })
+          .getProspectorBreakdown(from, to);
       }
-
-      pbData = data;
-      pbLoaded = true;
-
-      if (loadingEl) loadingEl.style.display = "none";
-      renderPBPage(data);
-    })
-    .catch(function (err) {
-      if (loadingEl) loadingEl.textContent = "Failed to load: " + err.message;
-    });
-}
 
       // =========================================================
       // PROSPECTOR BREAKDOWN — RENDER
