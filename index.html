@@ -1,1 +1,1754 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GML Data Management Team Dashboard</title>
 
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      /* =========================================================
+         RESET + TOKENS
+      ========================================================= */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --burn: #FF8F60;
+        --black: #131313;
+        --pearl: #F2F1EF;
+        --mint: #4DCFA7;
+        --blue: #60AEFF;
+        --yellow: #FFD881;
+        --white: #fff;
+        --border: #e5e3df;
+        --radius: 10px;
+      }
+
+      body {
+        font-family: "Inter", sans-serif;
+        background: var(--pearl);
+        color: var(--black);
+        font-size: 13px;
+        line-height: 1.4;
+      }
+
+      /* =========================================================
+         NAV
+      ========================================================= */
+      .nav {
+        background: var(--black);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 20px;
+        height: 52px;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+      }
+
+      .nav-left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .nav-logo {
+        width: 28px;
+        height: 28px;
+        background: var(--burn);
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        color: #fff;
+        font-size: 11px;
+      }
+
+      .nav-title {
+        color: #fff;
+        font-size: 14px;
+        font-weight: 600;
+      }
+
+      .nav-right {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .badge-refresh {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        color: #aaa;
+        font-size: 11px;
+      }
+
+      .mint-dot {
+        width: 7px;
+        height: 7px;
+        background: var(--mint);
+        border-radius: 50%;
+        display: inline-block;
+      }
+
+      .cached-time {
+        color: #999;
+        font-size: 11px;
+      }
+
+      .btn-refresh {
+        background: var(--burn);
+        color: #fff;
+        border: none;
+        padding: 5px 12px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 600;
+        cursor: pointer;
+        font-family: inherit;
+      }
+
+      .btn-refresh:hover {
+        opacity: 0.85;
+      }
+
+      .btn-refresh:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      /* =========================================================
+         TABS
+      ========================================================= */
+      .tab-bar {
+        background: #1a1a1a;
+        display: flex;
+        padding: 0 20px;
+        border-bottom: 1px solid #2a2a2a;
+      }
+
+      .tab-item {
+        padding: 12px 16px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #888;
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        transition: color 0.2s;
+      }
+
+      .tab-item.active {
+        color: #fff;
+        border-bottom-color: var(--burn);
+      }
+
+      /* =========================================================
+         FILTER BAR
+      ========================================================= */
+      .filter-bar {
+        background: #1a1a1a;
+        padding: 8px 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      .filter-label {
+        color: #aaa;
+        font-size: 12px;
+      }
+
+      .filter-input {
+        border-radius: 6px;
+        border: 1px solid #444;
+        background: #2a2a2a;
+        color: #fff;
+        padding: 4px 8px;
+        font-size: 12px;
+      }
+
+      .filter-btn {
+        background: #FF8F60;
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        padding: 5px 14px;
+        font-size: 12px;
+        cursor: pointer;
+        font-weight: 600;
+      }
+
+      /* =========================================================
+         MAIN
+      ========================================================= */
+      .main {
+        padding: 20px;
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+
+      /* =========================================================
+         KPI BLOCK
+      ========================================================= */
+      .kpi-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 14px;
+        margin-bottom: 20px;
+      }
+
+      .kpi-card {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 20px 22px;
+      }
+
+      .kpi-label {
+        font-size: 10px;
+        font-weight: 600;
+        color: #888;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 6px;
+      }
+
+      .kpi-num {
+        font-size: 38px;
+        font-weight: 600;
+        line-height: 1;
+      }
+
+      .kpi-num.burn {
+        color: var(--burn);
+      }
+
+      .kpi-num.mint {
+        color: var(--mint);
+      }
+
+      .kpi-sub {
+        font-size: 10px;
+        color: #999;
+        margin-top: 6px;
+      }
+
+      .kpi-warn {
+        font-size: 10px;
+        font-weight: 600;
+        color: #c0341a;
+        margin-top: 4px;
+      }
+
+      .coverage-bar {
+        height: 4px;
+        border-radius: 2px;
+        margin-top: 8px;
+        background: #f0f0f0;
+      }
+
+      .coverage-fill {
+        height: 100%;
+        border-radius: 2px;
+        transition: width 0.4s;
+      }
+
+      /* =========================================================
+         HIGHLIGHT CARDS
+      ========================================================= */
+      .highlight-row {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin-bottom: 20px;
+      }
+
+      .hl-card {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 12px 14px;
+      }
+
+      .hl-label {
+        font-size: 9px;
+        font-weight: 600;
+        color: #aaa;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 4px;
+      }
+
+      .hl-value {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--black);
+        margin-bottom: 2px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .hl-rate {
+        font-size: 10px;
+        color: var(--burn);
+        font-weight: 600;
+      }
+
+      /* =========================================================
+         SECTION / ACCORDION
+      ========================================================= */
+      .section {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        margin-bottom: 14px;
+        overflow: hidden;
+      }
+
+      .section-header {
+        background: var(--burn);
+        padding: 11px 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        cursor: pointer;
+        user-select: none;
+      }
+
+      .section-title {
+        color: #fff;
+        font-size: 12px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .section-badge {
+        background: rgba(255, 255, 255, 0.25);
+        color: #fff;
+        font-size: 10px;
+        font-weight: 600;
+        padding: 2px 8px;
+        border-radius: 20px;
+      }
+
+      .section-arrow {
+        color: #fff;
+        font-size: 12px;
+        transition: transform 0.2s;
+      }
+
+      .section-arrow.open {
+        transform: rotate(180deg);
+      }
+
+      .section-body {
+        display: none;
+        padding: 0;
+      }
+
+      .section-body.open {
+        display: block;
+      }
+
+      /* =========================================================
+         TABLES
+      ========================================================= */
+      .tbl-wrap {
+        overflow-x: auto;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 11px;
+      }
+
+      thead tr {
+        background: var(--black);
+      }
+
+      thead th {
+        color: #fff;
+        font-weight: 600;
+        padding: 8px 10px;
+        text-align: left;
+        white-space: nowrap;
+      }
+
+      tbody tr {
+        border-bottom: 1px solid #f0f0f0;
+      }
+
+      tbody tr:nth-child(even) {
+        background: #fafafa;
+      }
+
+      tbody tr:hover {
+        background: #f5f3f0;
+      }
+
+      tbody td {
+        padding: 7px 10px;
+        vertical-align: middle;
+      }
+
+      .no-items {
+        padding: 24px;
+        text-align: center;
+        color: #aaa;
+        font-size: 12px;
+      }
+
+      /* =========================================================
+         PILLS
+      ========================================================= */
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 2px 8px;
+        border-radius: 20px;
+        font-size: 10px;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+
+      .pill-good {
+        background: #d4f5ea;
+        color: #0e6e47;
+      }
+
+      .pill-neutral {
+        background: #fff4d6;
+        color: #a06800;
+      }
+
+      .pill-bad {
+        background: #ffe4db;
+        color: #c0341a;
+      }
+
+      .pill-scale {
+        background: #dbeafe;
+        color: #1e40af;
+      }
+
+      .pill-fix {
+        background: #fff4d6;
+        color: #a06800;
+      }
+
+      .pill-pause {
+        background: #ffe4db;
+        color: #c0341a;
+      }
+
+      .pill-au {
+        background: #dbeafe;
+        color: #1e40af;
+        font-size: 9px;
+        padding: 1px 6px;
+        margin-left: 4px;
+      }
+
+      .badge-au {
+        background: #60AEFF;
+        color: #003d7a;
+        font-size: 9px;
+        font-weight: 700;
+        padding: 2px 6px;
+        border-radius: 10px;
+        margin-left: 5px;
+        vertical-align: middle;
+      }
+
+      .badge-uk {
+        background: #4DCFA7;
+        color: #0a4a35;
+        font-size: 9px;
+        font-weight: 700;
+        padding: 2px 6px;
+        border-radius: 10px;
+        margin-left: 5px;
+        vertical-align: middle;
+      }
+
+      /* =========================================================
+         DIVIDER
+      ========================================================= */
+      .divider-attention {
+        text-align: center;
+        padding: 18px 0;
+        color: var(--burn);
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 2px;
+      }
+
+      .divider-attention::before,
+      .divider-attention::after {
+        content: "";
+        display: inline-block;
+        height: 1px;
+        width: 80px;
+        background: var(--burn);
+        vertical-align: middle;
+        margin: 0 10px;
+        border-top: 1px dashed var(--burn);
+      }
+
+      /* =========================================================
+         EMAIL CAPACITY
+      ========================================================= */
+      .capacity-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0;
+        padding: 16px;
+      }
+
+      .cap-card {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 14px;
+        text-align: center;
+      }
+
+      .cap-name {
+        font-size: 12px;
+        font-weight: 600;
+        margin-bottom: 8px;
+      }
+
+      .cap-big {
+        font-size: 28px;
+        font-weight: 600;
+        color: var(--burn);
+      }
+
+      .cap-row {
+        display: flex;
+        justify-content: space-between;
+        font-size: 10px;
+        color: #888;
+        margin-top: 4px;
+      }
+
+      .cap-bar-wrap {
+        height: 5px;
+        border-radius: 3px;
+        background: #f0f0f0;
+        margin-top: 8px;
+      }
+
+      .cap-bar {
+        height: 100%;
+        border-radius: 3px;
+      }
+
+      /* =========================================================
+         WARN SECTION
+      ========================================================= */
+      .warn-card {
+        background: #fff7f4;
+        border: 1px solid #ffd4c0;
+        border-radius: 8px;
+        margin: 12px;
+        padding: 12px 14px;
+      }
+
+      .warn-title {
+        font-size: 11px;
+        font-weight: 600;
+        color: #c0341a;
+        margin-bottom: 8px;
+      }
+
+      /* =========================================================
+         LOADING
+      ========================================================= */
+      .loading {
+        text-align: center;
+        padding: 60px;
+        color: #aaa;
+        font-size: 14px;
+      }
+
+      /* =========================================================
+         PAGINATION
+      ========================================================= */
+      .pg-controls {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        padding: 10px 14px;
+        background: #fff;
+        border-top: 1px solid var(--border);
+      }
+
+      .pg-btn {
+        background: var(--burn);
+        color: #fff;
+        border: none;
+        padding: 5px 14px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 600;
+        cursor: pointer;
+        font-family: inherit;
+        transition: opacity 0.2s;
+      }
+
+      .pg-btn:disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
+      }
+
+      .pg-btn:not(:disabled):hover {
+        opacity: 0.85;
+      }
+
+      .pg-info {
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--black);
+        min-width: 80px;
+        text-align: center;
+      }
+
+      /* =========================================================
+         PROSPECTOR BREAKDOWN
+      ========================================================= */
+      .pb-card-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 20px;
+      }
+
+      .pb-prosp-card {
+        background: #fff;
+        border: 2px solid var(--border);
+        border-radius: var(--radius);
+        padding: 14px 18px;
+        cursor: pointer;
+        transition: border-color 0.2s, background 0.2s;
+        min-width: 120px;
+        text-align: center;
+      }
+
+      .pb-prosp-card:hover {
+        border-color: var(--burn);
+      }
+
+      .pb-prosp-card.active {
+        background: var(--burn);
+        border-color: var(--burn);
+        color: #fff;
+      }
+
+      .pb-prosp-card.active .pb-card-name {
+        color: #fff;
+      }
+
+      .pb-prosp-card.active .pb-card-sent {
+        color: rgba(255, 255, 255, 0.8);
+      }
+
+      .pb-card-name {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--black);
+        margin-bottom: 4px;
+      }
+
+      .pb-card-sent {
+        font-size: 11px;
+        color: #888;
+      }
+
+      .pb-stats-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin-bottom: 20px;
+      }
+
+      .pb-stat-card {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 16px 18px;
+      }
+
+      .pb-stat-label {
+        font-size: 10px;
+        font-weight: 600;
+        color: #888;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 6px;
+      }
+
+      .pb-stat-value {
+        font-size: 28px;
+        font-weight: 600;
+        color: var(--burn);
+        line-height: 1;
+      }
+
+      .pb-section-title {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--black);
+        padding: 10px 0 6px;
+        margin-bottom: 4px;
+        border-bottom: 2px solid var(--burn);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      /* Two-column top layout: stats + capacity side by side */
+      .pb-top-row {
+        display: flex;
+        gap: 16px;
+        align-items: flex-start;
+        margin-bottom: 20px;
+      }
+
+      .pb-top-stats {
+        flex: 1;
+      }
+
+      .pb-top-stats .pb-stats-grid {
+        margin-bottom: 0;
+      }
+
+      .pb-cap-panel {
+        width: 220px;
+        flex-shrink: 0;
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 16px;
+        text-align: center;
+      }
+
+      .pb-cap-panel .cap-big {
+        font-size: 36px;
+        font-weight: 700;
+        line-height: 1;
+      }
+
+      .pb-cap-panel .cap-active-label {
+        font-size: 10px;
+        color: #aaa;
+        margin-top: 2px;
+        margin-bottom: 10px;
+      }
+
+      .pb-cap-panel .cap-row {
+        display: flex;
+        justify-content: space-between;
+        font-size: 11px;
+        color: #666;
+        padding: 3px 0;
+        border-top: 1px solid #f0f0f0;
+      }
+
+      .pb-cap-panel .cap-bar-wrap {
+        height: 6px;
+        border-radius: 3px;
+        background: #f0f0f0;
+        margin-top: 10px;
+      }
+
+      .pb-cap-panel .cap-bar {
+        height: 100%;
+        border-radius: 3px;
+      }
+
+      .badge-overused {
+        background: #fff3cd;
+        color: #a06800;
+        font-size: 10px;
+        font-weight: 600;
+        padding: 2px 8px;
+        border-radius: 20px;
+        white-space: nowrap;
+      }
+
+      .badge-healthy {
+        background: #d4f5ea;
+        color: #0e6e47;
+        font-size: 10px;
+        font-weight: 600;
+        padding: 2px 8px;
+        border-radius: 20px;
+        white-space: nowrap;
+      }
+
+      .pb-zero-rate td {
+        color: #c0341a !important;
+        background: #fff5f3 !important;
+      }
+
+      .pb-loading {
+        text-align: center;
+        padding: 60px;
+        color: #aaa;
+        font-size: 14px;
+      }
+
+      @media (max-width: 768px) {
+        .pb-card-row {
+          flex-direction: column;
+        }
+
+        .pb-stats-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+
+        .pb-prosp-card {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- =======================================================
+         TOP NAV
+    ======================================================== -->
+    <nav class="nav">
+      <div class="nav-left">
+        <div class="nav-logo">GML</div>
+        <span class="nav-title">GML — Data Management Team Dashboard</span>
+      </div>
+
+      <div class="nav-right">
+        <div class="badge-refresh">
+          <span class="mint-dot"></span>
+          Auto-refresh every 1 Hour
+        </div>
+
+        <span class="cached-time" id="cachedTime">Loading...</span>
+
+        <button class="btn-refresh" id="btnRefresh" onclick="refreshData()">
+          &#8635; Refresh
+        </button>
+      </div>
+    </nav>
+
+    <!-- =======================================================
+         TAB BAR
+    ======================================================== -->
+    <div class="tab-bar">
+      <div
+        class="tab-item active"
+        id="tab-dashboard"
+        onclick="switchTab('dashboard')"
+      >
+        Data Management Team Dashboard
+      </div>
+      <div
+        class="tab-item"
+        id="tab-prosp-breakdown"
+        onclick="switchTab('prosp-breakdown')"
+      >
+        Prospector Breakdown
+      </div>
+    </div>
+
+    <!-- =======================================================
+         FILTER BAR
+    ======================================================== -->
+    <div class="filter-bar">
+      <span class="filter-label">Date From</span>
+      <input type="date" id="dateFrom" class="filter-input" />
+
+      <span class="filter-label">Date To</span>
+      <input type="date" id="dateTo" class="filter-input" />
+
+      <button id="applyBtn" class="filter-btn" onclick="applyFilter()">
+        Apply Filter
+      </button>
+    </div>
+
+    <!-- =======================================================
+         MAIN CONTENT
+    ======================================================== -->
+    <div class="main" id="mainContent">
+      <div class="loading">Loading dashboard data...</div>
+    </div>
+
+    <!-- =======================================================
+         PROSPECTOR BREAKDOWN PAGE
+    ======================================================== -->
+    <div class="main" id="pbContent" style="display:none;">
+      <div class="pb-loading" id="pbLoading">Loading prospector data...</div>
+      <div id="pbInner" style="display:none;">
+        <!-- Prospector selector cards -->
+        <div class="pb-card-row" id="pbCardRow"></div>
+
+        <!-- Breakdown content -->
+        <div id="pbDetail"></div>
+      </div>
+    </div>
+
+    <script>
+      // =========================================================
+      // GLOBAL STATE
+      // =========================================================
+      var gData = null;
+      var refreshTimer = null;
+
+      // =========================================================
+      // SMALL HELPERS
+      // =========================================================
+      function pill(status) {
+        if (!status) return "";
+
+        var map = {
+          Good: "pill-good",
+          Neutral: "pill-neutral",
+          Bad: "pill-bad",
+          Scale: "pill-scale",
+          Fix: "pill-fix",
+          Pause: "pill-pause"
+        };
+
+        var cls = map[status] || "pill-neutral";
+        return '<span class="pill ' + cls + '">' + status + "</span>";
+      }
+
+      function fmtRate(v) {
+        return v !== undefined && v !== null && v !== "" ? v + "%" : "—";
+      }
+
+      function fmtN(v) {
+        return v !== undefined && v !== null ? v : 0;
+      }
+
+      function auPill(isAU) {
+        return isAU ? '<span class="pill pill-au">AU</span>' : "";
+      }
+
+      function cleanNicheName(name) {
+        if (!name) return name;
+        if (/^AU\s*-\s*/i.test(name)) {
+          return name.replace(/^AU\s*-\s*/i, "").trim();
+        }
+        if (/^UK\s*-\s*/i.test(name)) {
+          return name.replace(/^UK\s*-\s*/i, "").trim();
+        }
+        return name.trim();
+      }
+
+      function getNicheBadge(name) {
+        if (!name) return "";
+        if (/^AU\s*-\s*/i.test(name)) return '<span class="badge-au">AU</span>';
+        if (/^UK\s*-\s*/i.test(name)) return '<span class="badge-uk">UK</span>';
+        return "";
+      }
+
+      function coverageColor(pct) {
+        if (pct >= 80) return "var(--mint)";
+        if (pct >= 50) return "var(--yellow)";
+        return "#ef4444";
+      }
+
+      // =========================================================
+      // SECTION / ACCORDION HELPERS
+      // =========================================================
+      function section(id, icon, title, bodyHtml, count) {
+        var badge =
+          count !== undefined
+            ? '<span class="section-badge">' + count + "</span>"
+            : "";
+
+        return (
+          '<div class="section">' +
+            '<div class="section-header" onclick="toggleSection(\'' + id + '\')">' +
+              '<div class="section-title">' + icon + " " + title + badge + "</div>" +
+              '<span class="section-arrow open" id="arr_' + id + '">&#9660;</span>' +
+            "</div>" +
+            '<div class="section-body open" id="body_' + id + '">' + bodyHtml + "</div>" +
+          "</div>"
+        );
+      }
+
+      // =========================================================
+      // PAGINATION
+      // =========================================================
+      var ROWS_PER_PAGE = 5;
+
+      function initPagination(tableId) {
+        var tbl = document.getElementById(tableId);
+        if (!tbl) return;
+
+        var tbody = tbl.querySelector("tbody");
+        if (!tbody) return;
+
+        var rows = Array.prototype.slice.call(tbody.querySelectorAll("tr"));
+        var total = rows.length;
+        if (total <= ROWS_PER_PAGE) return;
+
+        var totalPages = Math.ceil(total / ROWS_PER_PAGE);
+        var currentPage = 1;
+
+        function showPage(page) {
+          currentPage = page;
+          var start = (page - 1) * ROWS_PER_PAGE;
+          var end = start + ROWS_PER_PAGE;
+
+          rows.forEach(function (r, i) {
+            r.style.display = i >= start && i < end ? "" : "none";
+          });
+
+          var prevBtn = document.getElementById("pg-prev-" + tableId);
+          var nextBtn = document.getElementById("pg-next-" + tableId);
+          var infoEl = document.getElementById("pg-info-" + tableId);
+
+          if (prevBtn) prevBtn.disabled = page === 1;
+          if (nextBtn) nextBtn.disabled = page === totalPages;
+          if (infoEl) infoEl.textContent = "Page " + page + " of " + totalPages;
+        }
+
+        var controls = document.createElement("div");
+        controls.className = "pg-controls";
+        controls.id = "pg-" + tableId;
+
+        var prevBtn = document.createElement("button");
+        prevBtn.id = "pg-prev-" + tableId;
+        prevBtn.className = "pg-btn";
+        prevBtn.textContent = "\u2190 Previous";
+        prevBtn.onclick = function () {
+          if (currentPage > 1) showPage(currentPage - 1);
+        };
+
+        var infoEl = document.createElement("span");
+        infoEl.id = "pg-info-" + tableId;
+        infoEl.className = "pg-info";
+
+        var nextBtn = document.createElement("button");
+        nextBtn.id = "pg-next-" + tableId;
+        nextBtn.className = "pg-btn";
+        nextBtn.textContent = "Next \u2192";
+        nextBtn.onclick = function () {
+          if (currentPage < totalPages) showPage(currentPage + 1);
+        };
+
+        controls.appendChild(prevBtn);
+        controls.appendChild(infoEl);
+        controls.appendChild(nextBtn);
+
+        var wrap = tbl.closest(".tbl-wrap") || tbl.parentNode;
+        wrap.parentNode.insertBefore(controls, wrap.nextSibling);
+
+        showPage(1);
+      }
+
+      function initAllPagination() {
+        var tables = document.querySelectorAll('table[data-paginate="true"]');
+
+        for (var i = 0; i < tables.length; i++) {
+          var tableId = tables[i].id;
+          if (tableId) {
+            var existing = document.getElementById("pg-" + tableId);
+            if (existing) existing.parentNode.removeChild(existing);
+            initPagination(tableId);
+          }
+        }
+      }
+
+      function toggleSection(id) {
+        var b = document.getElementById("body_" + id);
+        var a = document.getElementById("arr_" + id);
+
+        if (!b) return;
+
+        var isOpen = b.classList.contains("open");
+        b.classList.toggle("open", !isOpen);
+        b.style.display = isOpen ? "none" : "block";
+        a.classList.toggle("open", !isOpen);
+      }
+
+      // =========================================================
+      // RENDER: KPI + HIGHLIGHTS
+      // =========================================================
+      function renderKpi(d) {
+        var k = d.recurringKpi;
+        var pct = k.pct;
+        var col = coverageColor(pct);
+
+        var warn =
+          pct < 80
+            ? '<div class="kpi-warn">⚠ Below 80% target</div>'
+            : '<div style="font-size:10px;color:var(--mint);margin-top:4px;font-weight:600;">✓ On target</div>';
+
+        return (
+          '<div class="kpi-grid">' +
+            '<div class="kpi-card">' +
+              '<div class="kpi-label">Total Recurring Orders</div>' +
+              '<div class="kpi-num burn">' + fmtN(k.totalRecurring) + "</div>" +
+              '<div class="kpi-sub">Active + Pending + Delayed + In Progress</div>' +
+            "</div>" +
+            '<div class="kpi-card">' +
+              '<div class="kpi-label">Recurring w/ Active Campaigns</div>' +
+              '<div class="kpi-num mint">' + fmtN(k.recurringWithCampaigns) + "</div>" +
+              '<div class="kpi-sub">Assigned inbox active + campaign niche set</div>' +
+            "</div>" +
+            '<div class="kpi-card">' +
+              '<div class="kpi-label">% Coverage</div>' +
+              '<div class="kpi-num" style="color:' + col + '">' + pct + "%</div>" +
+              '<div class="kpi-sub">Target: 80%</div>' +
+              warn +
+              '<div class="coverage-bar"><div class="coverage-fill" style="width:' +
+                Math.min(pct, 100) +
+                "%;background:" +
+                col +
+                '"></div></div>' +
+            "</div>" +
+          "</div>"
+        );
+      }
+
+      function renderHighlights(d) {
+        function hlCard(label, val, rate, titleText) {
+          return (
+            '<div class="hl-card">' +
+              '<div class="hl-label">' + label + "</div>" +
+              '<div class="hl-value" title="' + (titleText || "") + '">' + (val || "—") + "</div>" +
+              '<div class="hl-rate">' + (rate !== undefined ? rate + "% reply" : "") + "</div>" +
+            "</div>"
+          );
+        }
+
+        var eh = d.execHighlights || [];
+        var best = {};
+
+        eh.forEach(function (r) {
+          best[r.category] = r;
+        });
+
+        var tp =
+          d.prospectors && d.prospectors.length
+            ? d.prospectors
+                .slice()
+                .sort(function (a, b) {
+                  return b.sent - a.sent;
+                })[0]
+            : null;
+
+        return (
+          '<div class="highlight-row">' +
+            hlCard(
+              "Best Niche",
+              best["Best Niche"]
+                ? cleanNicheName(best["Best Niche"].topValue) + getNicheBadge(best["Best Niche"].topValue)
+                : "—",
+              best["Best Niche"] ? best["Best Niche"].replyRate : undefined,
+              best["Best Niche"] ? cleanNicheName(best["Best Niche"].topValue) : "—"
+            ) +
+            hlCard(
+              "Best Email Source",
+              best["Best Email Source"] ? best["Best Email Source"].topValue : "—",
+              best["Best Email Source"] ? best["Best Email Source"].replyRate : undefined
+            ) +
+            hlCard(
+              "Best Prosp. Type",
+              best["Best Prospecting Type"] ? best["Best Prospecting Type"].topValue : "—",
+              best["Best Prospecting Type"] ? best["Best Prospecting Type"].replyRate : undefined
+            ) +
+            hlCard(
+              "Best Template",
+              best["Best Template"] ? best["Best Template"].topValue : "—",
+              best["Best Template"] ? best["Best Template"].replyRate : undefined
+            ) +
+            hlCard(
+              "Top Prospector",
+              tp ? tp.name : "—",
+              tp ? tp.replyRate : undefined
+            ) +
+          "</div>"
+        );
+      }
+
+      // =========================================================
+      // RENDER: TABLES
+      // =========================================================
+      function renderExecTable(d) {
+        var rows = d.execHighlights || [];
+        if (!rows.length) return '<div class="no-items">No data available</div>';
+
+        var html =
+          '<div class="tbl-wrap"><table data-paginate="true" id="tbl-exec">' +
+            "<thead><tr>" +
+              "<th>Category</th><th>Top Value</th><th>Total Campaigns Created</th><th>Total Emails Launched</th><th>Replies</th><th>Reply Rate</th><th>Pos. Rate</th><th>Status</th><th>Next Action</th>" +
+            "</tr></thead><tbody>";
+
+        rows.forEach(function (r) {
+          html +=
+            "<tr>" +
+              "<td>" + r.category + "</td>" +
+              "<td>" +
+                (
+                  r.category === "Best Niche"
+                    ? cleanNicheName(r.topValue || "—") + getNicheBadge(r.topValue || "")
+                    : (r.topValue || "—")
+                ) +
+              "</td>" +
+              "<td>" + fmtN(r.sent) + "</td>" +
+              "<td>" + fmtN(r.launchEmails || 0) + "</td>" +
+              "<td>" + fmtN(r.replies) + "</td>" +
+              "<td>" + fmtRate(r.replyRate) + "</td>" +
+              "<td>" + fmtRate(r.posRate) + "</td>" +
+              "<td>" + pill(r.status) + "</td>" +
+              "<td>" + pill(r.nextAction || r.recommendation) + "</td>" +
+            "</tr>";
+        });
+
+        html += "</tbody></table></div>";
+        return html;
+      }
+
+      function renderProspTable(d) {
+        var rows = d.prospectors || [];
+        if (!rows.length) return '<div class="no-items">No prospector data</div>';
+
+        var html =
+          '<div class="tbl-wrap"><table data-paginate="true" id="tbl-prosp">' +
+            "<thead><tr>" +
+              "<th>Prospector</th><th>Best Niche</th><th>Best Email Src</th><th>Best Prosp. Type</th><th>Best Template</th><th>Total Campaigns Created</th><th>Total Emails Launched</th><th>Reply Rate</th><th>Pos. Rate</th><th>Status</th><th>Next Action</th>" +
+            "</tr></thead><tbody>";
+
+        rows.forEach(function (r) {
+          html +=
+            "<tr>" +
+              "<td><strong>" + r.name + "</strong></td>" +
+              "<td>" + cleanNicheName(r.bestNiche || "—") + getNicheBadge(r.bestNiche || "") + "</td>" +
+              "<td>" + (r.bestEmailSrc || "—") + "</td>" +
+              "<td>" + (r.bestProsType || "—") + "</td>" +
+              "<td>" + (r.bestTemplate || "—") + "</td>" +
+              "<td>" + fmtN(r.sent) + "</td>" +
+              "<td>" + fmtN(r.launchEmails || 0) + "</td>" +
+              "<td>" + fmtRate(r.replyRate) + "</td>" +
+              "<td>" + fmtRate(r.posRate) + "</td>" +
+              "<td>" + pill(r.status) + "</td>" +
+              "<td>" + pill(r.nextAction) + "</td>" +
+            "</tr>";
+        });
+
+        html += "</tbody></table></div>";
+        return html;
+      }
+
+      function renderBreakdownTable(rows, showAU, tableId) {
+        if (!rows || !rows.length) return '<div class="no-items">No data available</div>';
+
+        var html =
+          '<div class="tbl-wrap"><table data-paginate="true" id="' + (tableId || "tbl-breakdown") + '">' +
+            "<thead><tr>" +
+              "<th>Name</th><th>Total Campaigns Created</th><th>Total Emails Launched</th><th>Replies</th><th>Reply Rate</th><th>Positive</th><th>Pos. Rate</th><th>Neg. Resp.</th><th>Neg. Rate</th><th>Status</th>" +
+            "</tr></thead><tbody>";
+
+        rows.forEach(function (r) {
+          var nameCell = cleanNicheName(r.name) + getNicheBadge(r.name);
+
+          html +=
+            "<tr>" +
+              "<td>" + nameCell + "</td>" +
+              "<td>" + fmtN(r.sent) + "</td>" +
+              "<td>" + fmtN(r.launchEmails || 0) + "</td>" +
+              "<td>" + fmtN(r.replies) + "</td>" +
+              "<td>" + fmtRate(r.replyRate) + "</td>" +
+              "<td>" + fmtN(r.positive) + "</td>" +
+              "<td>" + fmtRate(r.posRate) + "</td>" +
+              "<td>" + fmtN(r.negResp) + "</td>" +
+              "<td>" + fmtRate(r.negRate) + "</td>" +
+              "<td>" + pill(r.status) + "</td>" +
+            "</tr>";
+        });
+
+        html += "</tbody></table></div>";
+        return html;
+      }
+
+      function renderTemplateTable(rows) {
+        if (!rows || !rows.length) return '<div class="no-items">No template data</div>';
+
+        var html =
+          '<div class="tbl-wrap"><table data-paginate="true" id="tbl-template">' +
+            "<thead><tr>" +
+              "<th>Template</th><th>Top Niche</th><th>Top Email Src</th><th>Top Prosp. Type</th><th>Total Campaigns Created</th><th>Total Emails Launched</th><th>Replies</th><th>Reply Rate</th><th>Positive</th><th>Pos. Rate</th><th>Neg.</th><th>Neg. Rate</th><th>Status</th><th>Rec.</th>" +
+            "</tr></thead><tbody>";
+
+        rows.forEach(function (r) {
+          html +=
+            "<tr>" +
+              "<td><strong>" + (r.name || "—") + "</strong></td>" +
+              "<td>" + cleanNicheName(r.topNiche || "—") + getNicheBadge(r.topNiche || "") + "</td>" +
+              "<td>" + (r.topEmailSrc || "—") + "</td>" +
+              "<td>" + (r.topProsType || "—") + "</td>" +
+              "<td>" + fmtN(r.sent) + "</td>" +
+              "<td>" + fmtN(r.launchEmails || 0) + "</td>" +
+              "<td>" + fmtN(r.replies) + "</td>" +
+              "<td>" + fmtRate(r.replyRate) + "</td>" +
+              "<td>" + fmtN(r.positive) + "</td>" +
+              "<td>" + fmtRate(r.posRate) + "</td>" +
+              "<td>" + fmtN(r.negResp) + "</td>" +
+              "<td>" + fmtRate(r.negRate) + "</td>" +
+              "<td>" + pill(r.status) + "</td>" +
+              "<td>" + pill(r.recommendation) + "</td>" +
+            "</tr>";
+        });
+
+        html += "</tbody></table></div>";
+        return html;
+      }
+
+      function renderPauseSection(rows) {
+        var bad = (rows || []).filter(function (r) {
+          return r.status === "Bad";
+        });
+
+        if (!bad.length) return '<div class="no-items">No templates flagged for pause</div>';
+
+        var html =
+          '<div class="warn-card">' +
+            '<div class="warn-title">⚠ ' + bad.length + " template(s) flagged for PAUSE</div>" +
+            '<div class="tbl-wrap"><table data-paginate="true" id="tbl-pause">' +
+              "<thead><tr>" +
+                "<th>Template</th><th>Total Campaigns Created</th><th>Total Emails Launched</th><th>Reply Rate</th><th>Pos. Rate</th><th>Status</th><th>Recommendation</th>" +
+              "</tr></thead><tbody>";
+
+        bad.forEach(function (r) {
+          html +=
+            "<tr>" +
+              "<td><strong>" + (r.name || "—") + "</strong></td>" +
+              "<td>" + fmtN(r.sent) + "</td>" +
+              "<td>" + fmtN(r.launchEmails || 0) + "</td>" +
+              "<td>" + fmtRate(r.replyRate) + "</td>" +
+              "<td>" + fmtRate(r.posRate) + "</td>" +
+              "<td>" + pill(r.status) + "</td>" +
+              "<td>" + pill(r.recommendation) + "</td>" +
+            "</tr>";
+        });
+
+        html += "</tbody></table></div></div>";
+        return html;
+      }
+
+      function renderCapacity(rows) {
+        if (!rows || !rows.length) return '<div class="no-items">No capacity data</div>';
+
+        var html = '<div class="capacity-grid">';
+
+        rows.forEach(function (r) {
+          var col = r.capacityPct >= 80 ? "var(--burn)" : "var(--mint)";
+
+          html +=
+            '<div class="cap-card">' +
+              '<div class="cap-name">' + r.prospector + "</div>" +
+              '<div class="cap-big" style="color:' + col + '">' + r.active + "</div>" +
+              '<div style="font-size:10px;color:#aaa;margin-top:2px;">active emails</div>' +
+              '<div class="cap-row"><span>Total</span><span><strong>' + r.total + "</strong></span></div>" +
+              '<div class="cap-row"><span>Resting</span><span><strong>' + r.resting + "</strong></span></div>" +
+              '<div class="cap-row"><span>Other</span><span><strong>' + r.other + "</strong></span></div>" +
+              '<div class="cap-row"><span>Capacity Used</span><span><strong>' + r.capacityPct + "%</strong></span></div>" +
+              '<div class="cap-bar-wrap"><div class="cap-bar" style="width:' +
+                Math.min(r.capacityPct, 100) +
+                "%;background:" +
+                col +
+                '"></div></div>' +
+            "</div>";
+        });
+
+        html += "</div>";
+        return html;
+      }
+
+      // =========================================================
+      // MAIN RENDER
+      // =========================================================
+      function render(d) {
+        gData = d;
+        document.getElementById("cachedTime").textContent = "Cached " + (d.cachedAt || "");
+
+        var html = "";
+        html += renderKpi(d);
+        html += renderHighlights(d);
+
+        html += section("exec", "📊", "Executive Highlights", renderExecTable(d), (d.execHighlights || []).length);
+        html += section("prosp", "🧑", "Prospector Performance", renderProspTable(d), (d.prospectors || []).length);
+        html += section("niche", "📊", "Campaign Performance by Niche", renderBreakdownTable(d.nicheBreakdown, true, "tbl-niche"), (d.nicheBreakdown || []).length);
+        html += section("emailsrc", "📬", "Email Source Breakdown", renderBreakdownTable(d.emailSourceBreakdown, false, "tbl-emailsrc"), (d.emailSourceBreakdown || []).length);
+        html += section("prosptype", "🔍", "Prospecting Type Breakdown", renderBreakdownTable(d.prospTypeBreakdown, false, "tbl-prosptype"), (d.prospTypeBreakdown || []).length);
+
+        // divider-attention
+        // html += '<div class="divider-attention">NEEDS ATTENTION</div>';
+
+        html += section("templates", "🏆", "Template Performance", renderTemplateTable(d.templatePerformance), (d.templatePerformance || []).length);
+        html += section(
+          "pause",
+          "⚠️",
+          "Templates to Pause",
+          renderPauseSection(d.templatePerformance),
+          (d.templatePerformance || []).filter(function (r) {
+            return r.status === "Bad";
+          }).length
+        );
+
+        document.getElementById("mainContent").innerHTML = html;
+        initAllPagination();
+      }
+
+      // =========================================================
+      // DATA ACTIONS
+      // =========================================================
+      function applyFilter() {
+        pbLoaded = false;
+        pbData = null;
+        pbSelectedProsp = null;
+
+        if (typeof activeTab !== "undefined" && activeTab === "prosp-breakdown") {
+          loadProspectorBreakdown();
+        }
+
+        var from = document.getElementById("dateFrom").value;
+        var to = document.getElementById("dateTo").value;
+        var btn = document.getElementById("applyBtn");
+
+        if (btn) {
+          btn.textContent = "Applying...";
+          btn.disabled = true;
+        }
+
+        google.script.run
+          .withSuccessHandler(function (data) {
+            render(data);
+
+            if (btn) {
+              btn.textContent = "Apply Filter";
+              btn.disabled = false;
+            }
+
+            scheduleRefresh();
+          })
+          .withFailureHandler(function (err) {
+            if (btn) {
+              btn.textContent = "Apply Filter";
+              btn.disabled = false;
+            }
+
+            console.error("Filter error:", err);
+          })
+          .getData(from, to);
+      }
+
+      function refreshData() {
+        applyFilter();
+      }
+
+      function scheduleRefresh() {
+        if (refreshTimer) clearTimeout(refreshTimer);
+        refreshTimer = setTimeout(refreshData, 15 * 60 * 1000);
+      }
+
+      // =========================================================
+      // INITIAL LOAD
+      // =========================================================
+      window.addEventListener("load", function () {
+        var now = new Date();
+        var firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+
+        var pad = function (n) {
+          return n < 10 ? "0" + n : String(n);
+        };
+
+        document.getElementById("dateFrom").value =
+          now.getFullYear() + "-" + pad(now.getMonth() + 1) + "-" + pad(firstDay.getDate());
+
+        document.getElementById("dateTo").value =
+          now.getFullYear() + "-" + pad(now.getMonth() + 1) + "-" + pad(now.getDate());
+
+        applyFilter();
+      });
+
+      // =========================================================
+      // TAB SWITCHING
+      // =========================================================
+      var activeTab = "dashboard";
+
+      function switchTab(tabId) {
+        activeTab = tabId;
+
+        var tabs = ["dashboard", "prosp-breakdown"];
+        tabs.forEach(function (t) {
+          var el = document.getElementById("tab-" + t);
+          if (el) {
+            el.classList.toggle("active", t === tabId);
+          }
+        });
+
+        var mainContent = document.getElementById("mainContent");
+        var pbContent = document.getElementById("pbContent");
+
+        if (mainContent) mainContent.style.display = tabId === "dashboard" ? "" : "none";
+        if (pbContent) pbContent.style.display = tabId === "prosp-breakdown" ? "" : "none";
+
+        if (tabId === "prosp-breakdown") {
+          loadProspectorBreakdown();
+        }
+      }
+
+      // =========================================================
+      // PROSPECTOR BREAKDOWN — STATE
+      // =========================================================
+      var pbData = null;
+      var pbLoaded = false;
+      var pbSelectedProsp = null;
+
+      // =========================================================
+      // PROSPECTOR BREAKDOWN — FETCH DATA
+      // =========================================================
+      function loadProspectorBreakdown() {
+        if (pbLoaded && pbData) {
+          renderPBPage(pbData);
+          return;
+        }
+
+        var loadingEl = document.getElementById("pbLoading");
+        var innerEl = document.getElementById("pbInner");
+
+        if (loadingEl) loadingEl.style.display = "block";
+        if (innerEl) innerEl.style.display = "none";
+
+        var from = document.getElementById("dateFrom")
+          ? document.getElementById("dateFrom").value
+          : "";
+        var to = document.getElementById("dateTo")
+          ? document.getElementById("dateTo").value
+          : "";
+
+        google.script.run
+          .withSuccessHandler(function (data) {
+            if (data && data.error) {
+              if (loadingEl) loadingEl.textContent = "Error: " + data.error;
+              return;
+            }
+
+            pbData = data;
+            pbLoaded = true;
+
+            if (loadingEl) loadingEl.style.display = "none";
+            renderPBPage(data);
+          })
+          .withFailureHandler(function (err) {
+            if (loadingEl) loadingEl.textContent = "Failed to load: " + err.message;
+          })
+          .getProspectorBreakdown(from, to);
+      }
+
+      // =========================================================
+      // PROSPECTOR BREAKDOWN — RENDER
+      // =========================================================
+      function renderPBPage(data) {
+        var bd = data.breakdown || [];
+
+        if (!bd.length) {
+          var loadingEl = document.getElementById("pbLoading");
+          if (loadingEl) {
+            loadingEl.style.display = "block";
+            loadingEl.textContent = "No prospector data for this date range.";
+          }
+          return;
+        }
+
+        var innerEl = document.getElementById("pbInner");
+        if (innerEl) innerEl.style.display = "block";
+
+        var cardRow = document.getElementById("pbCardRow");
+        if (cardRow) {
+          cardRow.innerHTML = "";
+
+          bd.forEach(function (p) {
+            var card = document.createElement("div");
+            card.className = "pb-prosp-card" + (pbSelectedProsp === p.name ? " active" : "");
+            card.id = "pbcard-" + p.name.replace(/\s+/g, "-");
+            card.innerHTML =
+              '<div class="pb-card-name">' + esc(p.name) + "</div>" +
+              '<div class="pb-card-sent">' + p.totalSent + " campaigns created</div>";
+
+            card.onclick = (function (name) {
+              return function () {
+                selectPBProspector(name, data);
+              };
+            })(p.name);
+
+            cardRow.appendChild(card);
+          });
+        }
+
+        var toSelect = pbSelectedProsp || (bd.length ? bd[0].name : null);
+        if (toSelect) selectPBProspector(toSelect, data);
+      }
+
+      function selectPBProspector(name, data) {
+        pbSelectedProsp = name;
+        var bd = data.breakdown || [];
+
+        bd.forEach(function (p) {
+          var card = document.getElementById("pbcard-" + p.name.replace(/\s+/g, "-"));
+          if (card) card.classList.toggle("active", p.name === name);
+        });
+
+        var prosp = null;
+        for (var i = 0; i < bd.length; i++) {
+          if (bd[i].name === name) {
+            prosp = bd[i];
+            break;
+          }
+        }
+        if (!prosp) return;
+
+        var detail = document.getElementById("pbDetail");
+        if (!detail) return;
+
+        detail.innerHTML = renderPBDetail(prosp);
+        initAllPagination();
+      }
+
+      function esc(s) {
+        return String(s || "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;");
+      }
+
+      function renderPBDetail(p) {
+        var html = "";
+
+        // ── Summary Stats ──────────────────────────────────────
+        html += '<div class="pb-top-row"><div class="pb-top-stats"><div class="pb-stats-grid">';
+        html += pbStat("Total Campaigns Created", p.totalSent);
+        html += pbStat("Total Emails Launched", p.totalLaunchEmails || 0);
+        html += pbStat("Total Replies", p.totalReplies);
+        html += pbStat("Reply Rate", p.overallReplyRate + "%");
+        html += pbStat("Unique Emails Used", p.uniqueEmails);
+        html += pbStat("Niches Covered", p.nicheCount);
+        html += "</div></div>";
+
+        // ── Email Capacity (right panel) ──────────────────────
+        if (gData && gData.emailCapacity) {
+          var capRow = gData.emailCapacity.filter(function (c) {
+            return c.prospector === p.name;
+          })[0];
+
+          if (capRow) {
+            var col = capRow.capacityPct >= 80 ? "var(--burn)" : "var(--mint)";
+            html += '<div class="pb-cap-panel">';
+            html += '<div style="font-size:10px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">📧 Email Capacity</div>';
+            html += '<div class="cap-big" style="color:' + col + '">' + capRow.active + "</div>";
+            html += '<div class="cap-active-label">active emails</div>';
+            html += '<div class="cap-row"><span>Total</span><span><strong>' + capRow.total + "</strong></span></div>";
+            html += '<div class="cap-row"><span>Resting</span><span><strong>' + capRow.resting + "</strong></span></div>";
+            html += '<div class="cap-row"><span>Other</span><span><strong>' + capRow.other + "</strong></span></div>";
+            html += '<div class="cap-row"><span>Capacity Used</span><span><strong>' + capRow.capacityPct + "%</strong></span></div>";
+            html += '<div class="cap-bar-wrap"><div class="cap-bar" style="width:' +
+              Math.min(capRow.capacityPct, 100) +
+              "%;background:" +
+              col +
+              '"></div></div>';
+            html += "</div>";
+          }
+        }
+
+        html += "</div>";
+
+        // ── Emails Used ────────────────────────────────────────
+        html += '<div class="pb-section-title">📧 Emails Used</div>';
+        if (p.emailRows && p.emailRows.length) {
+          html += '<div class="tbl-wrap"><table data-paginate="true" id="tbl-pb-emails-' + p.name.replace(/\s+/g, "-") + '">';
+          html += "<thead><tr>";
+          html += "<th>Email Address</th><th>Times Used</th><th>Niches Sent To</th><th>Reply Rate</th><th>Status</th>";
+          html += "</tr></thead><tbody>";
+
+          p.emailRows.forEach(function (e) {
+            var badge = e.overused
+              ? '<span class="badge-overused">Overused</span>'
+              : '<span class="badge-healthy">Healthy</span>';
+
+            html += "<tr>";
+            html += "<td>" + esc(e.emailAddress) + "</td>";
+            html += "<td>" + e.timesUsed + "</td>";
+            html += "<td>" + esc(e.niches) + "</td>";
+            html += "<td>" + e.replyRate + "%</td>";
+            html += "<td>" + badge + "</td>";
+            html += "</tr>";
+          });
+
+          html += "</tbody></table></div>";
+        } else {
+          html += '<div class="no-items">No email data</div>';
+        }
+
+        // ── Niche Breakdown ────────────────────────────────────
+        html += '<div class="pb-section-title" style="margin-top:16px;">🗂 Niche Breakdown</div>';
+        if (p.nicheRows && p.nicheRows.length) {
+          html += '<div class="tbl-wrap"><table data-paginate="true" id="tbl-pb-niches-' + p.name.replace(/\s+/g, "-") + '">';
+          html += "<thead><tr>";
+          html += "<th>Niche</th><th>Total Campaigns Created</th><th>Total Emails Launched</th><th>Replies</th><th>Reply Rate</th><th>Positive</th><th>Negative</th>";
+          html += "</tr></thead><tbody>";
+
+          p.nicheRows.forEach(function (n) {
+            var rowClass = n.replyRate === 0 ? ' class="pb-zero-rate"' : "";
+            html += "<tr" + rowClass + ">";
+            html += "<td>" + cleanNicheName(n.niche) + getNicheBadge(n.niche) + "</td>";
+            html += "<td>" + n.sent + "</td>";
+            html += "<td>" + (n.launchEmails || 0) + "</td>";
+            html += "<td>" + n.replies + "</td>";
+            html += "<td>" + n.replyRate + "%</td>";
+            html += "<td>" + n.positive + "</td>";
+            html += "<td>" + n.negative + "</td>";
+            html += "</tr>";
+          });
+
+          html += "</tbody></table></div>";
+        } else {
+          html += '<div class="no-items">No niche data</div>';
+        }
+
+        return html;
+      }
+
+      function pbStat(label, value) {
+        return (
+          '<div class="pb-stat-card">' +
+            '<div class="pb-stat-label">' + esc(label) + "</div>" +
+            '<div class="pb-stat-value">' + esc(String(value)) + "</div>" +
+          "</div>"
+        );
+      }
+    </script>
+  </body>
+</html>
