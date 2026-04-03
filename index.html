@@ -797,6 +797,42 @@
       background: #fff5f3 !important;
     }
 
+    /* =========================================================
+       LEGEND
+    ========================================================= */
+    .legend-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 16px;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 16px;
+      margin-bottom: 16px;
+      align-items: center;
+    }
+    .legend-title {
+      font-size: 10px;
+      font-weight: 600;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-right: 4px;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 10px;
+      color: #555;
+    }
+    .legend-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
     .pb-loading {
       text-align: center;
       padding: 60px;
@@ -886,9 +922,6 @@
   </div>
 
   <script>
-
-    var API_URL = 'https://script.google.com/a/macros/getmelinks.com/s/AKfycbyc8WOAcDAAsPepCS_bWBFdZeZu2vZRF9NqwskYjOOdIZ08YRITuUDxcnI_EoC7jT4r/exec';
-
     // =========================================================
     // GLOBAL STATE
     // =========================================================
@@ -1318,8 +1351,9 @@
           +   '<div class="cap-big" style="color:' + col + '">' + r.active + '</div>'
           +   '<div style="font-size:10px;color:#aaa;margin-top:2px;">active emails</div>'
           +   '<div class="cap-row"><span>Total</span><span><strong>' + r.total + '</strong></span></div>'
-          +   '<div class="cap-row"><span>Resting</span><span><strong>' + r.resting + '</strong></span></div>'
-          +   '<div class="cap-row"><span>Other</span><span><strong>' + r.other + '</strong></span></div>'
+          +   '<div class="cap-row"><span>On-Going</span><span><strong>' + (r.active || 0) + '</strong></span></div>'
+          +   '<div class="cap-row"><span>Completed</span><span><strong>' + (r.completed || 0) + '</strong></span></div>'
+          +   '<div class="cap-row"><span>No Campaign Yet</span><span><strong>' + (r.available || 0) + '</strong></span></div>'
           +   '<div class="cap-row"><span>Capacity Used</span><span><strong>' + r.capacityPct + '%</strong></span></div>'
           +   '<div class="cap-bar-wrap"><div class="cap-bar" style="width:' + Math.min(r.capacityPct, 100) + '%;background:' + col + '"></div></div>'
           + '</div>';
@@ -1339,27 +1373,14 @@
       var html = '';
       html += renderKpi(d);
       html += renderHighlights(d);
-
-      // Normal sections
+      html += renderMainLegend();
       html += section('exec', '📊', 'Executive Highlights', renderExecTable(d), (d.execHighlights || []).length);
       html += section('prosp', '🧑', 'Prospector Performance', renderProspTable(d), (d.prospectors || []).length);
       html += section('niche', '📊', 'Campaign Performance by Niche', renderBreakdownTable(d.nicheBreakdown, true, 'tbl-niche'), (d.nicheBreakdown || []).length);
       html += section('emailsrc', '📬', 'Email Source Breakdown', renderBreakdownTable(d.emailSourceBreakdown, false, 'tbl-emailsrc'), (d.emailSourceBreakdown || []).length);
       html += section('prosptype', '🔍', 'Prospecting Type Breakdown', renderBreakdownTable(d.prospTypeBreakdown, false, 'tbl-prosptype'), (d.prospTypeBreakdown || []).length);
-
-      // divider-attention
-      // html += '<div class="divider-attention">NEEDS ATTENTION</div>';
-
-      // Issues sections
       html += section('templates', '🏆', 'Template Performance', renderTemplateTable(d.templatePerformance), (d.templatePerformance || []).length);
-      html += section(
-        'pause',
-        '⚠️',
-        'Templates to Pause',
-        renderPauseSection(d.templatePerformance),
-        (d.templatePerformance || []).filter(function(r) { return r.status === 'Bad'; }).length
-      );
-
+      html += section('pause', '⚠️', 'Templates to Pause', renderPauseSection(d.templatePerformance), (d.templatePerformance || []).filter(function(r) { return r.status === 'Bad'; }).length);
       document.getElementById('mainContent').innerHTML = html;
       initAllPagination();
     }
@@ -1373,43 +1394,27 @@
   var btn  = document.getElementById('applyBtn');
 
   pbLoaded = false; pbData = null; pbSelectedProsp = null;
+
   if (btn) { btn.textContent = 'Applying...'; btn.disabled = true; }
 
-  fetch(API_URL + '?action=getData&dateFrom=' + encodeURIComponent(from) + '&dateTo=' + encodeURIComponent(to))
-    .then(function(res) { return res.json(); })
-    .then(function(data) {
+  google.script.run
+    .withSuccessHandler(function(data) {
       render(data);
       if (activeTab === 'prosp-breakdown') renderProspectorBreakdown(data.prospectors);
       if (btn) { btn.textContent = 'Apply Filter'; btn.disabled = false; }
       scheduleRefresh();
     })
-    .catch(function(err) {
+    .withFailureHandler(function(err) {
       if (btn) { btn.textContent = 'Apply Filter'; btn.disabled = false; }
       console.error('Filter error:', err);
-    });
-}
-
-
-   function refreshData() {
-  var from = document.getElementById('dateFrom').value;
-  var to   = document.getElementById('dateTo').value;
-  var btn  = document.getElementById('btnRefresh');
-
-  if (btn) { btn.textContent = 'Refreshing...'; btn.disabled = true; }
-
-  fetch(API_URL + '?action=getDataFresh&dateFrom=' + encodeURIComponent(from) + '&dateTo=' + encodeURIComponent(to))
-    .then(function(res) { return res.json(); })
-    .then(function(data) {
-      render(data);
-      if (activeTab === 'prosp-breakdown') renderProspectorBreakdown(data.prospectors);
-      if (btn) { btn.textContent = '↺ Refresh'; btn.disabled = false; }
-      scheduleRefresh();
     })
-    .catch(function(err) {
-      if (btn) { btn.textContent = '↺ Refresh'; btn.disabled = false; }
-      console.error('Refresh error:', err);
-    });
+    .getData(from, to);
 }
+
+
+    function refreshData() {
+      applyFilter();
+    }
 
     function scheduleRefresh() {
       if (refreshTimer) clearTimeout(refreshTimer);
@@ -1559,6 +1564,8 @@
     function renderPBDetail(p) {
       var html = '';
 
+      html += renderPBLegend();
+
       // ── Summary Stats ──────────────────────────────────────
       html += '<div class="pb-top-row"><div class="pb-top-stats"><div class="pb-stats-grid">';
       html += pbStat('Total Campaigns Created', p.totalSent);
@@ -1578,8 +1585,9 @@
           html +=   '<div class="cap-big" style="color:' + col + '">' + capRow.active + '</div>';
           html +=   '<div class="cap-active-label">active emails</div>';
           html +=   '<div class="cap-row"><span>Total</span><span><strong>' + capRow.total + '</strong></span></div>';
-          html +=   '<div class="cap-row"><span>Resting</span><span><strong>' + capRow.resting + '</strong></span></div>';
-          html +=   '<div class="cap-row"><span>Other</span><span><strong>' + capRow.other + '</strong></span></div>';
+          html +=   '<div class="cap-row"><span>On-Going</span><span><strong>' + (capRow.active || 0) + '</strong></span></div>';
+          html +=   '<div class="cap-row"><span>Completed</span><span><strong>' + (capRow.completed || 0) + '</strong></span></div>';
+          html +=   '<div class="cap-row"><span>No Campaign Yet</span><span><strong>' + (capRow.available || 0) + '</strong></span></div>';
           html +=   '<div class="cap-row"><span>Capacity Used</span><span><strong>' + capRow.capacityPct + '%</strong></span></div>';
           html +=   '<div class="cap-bar-wrap"><div class="cap-bar" style="width:' + Math.min(capRow.capacityPct, 100) + '%;background:' + col + '"></div></div>';
           html += '</div>';
@@ -1636,6 +1644,28 @@
       }
 
       return html;
+    }
+
+    function renderMainLegend() {
+      return '<div class="legend-bar">'
+        + '<span class="legend-title">Status:</span>'
+        + '<span class="legend-item"><span class="pill pill-good">Good</span> ≥4% reply rate &amp; ≥1% positive rate (min. 50 campaigns)</span>'
+        + '<span class="legend-item"><span class="pill pill-neutral">Neutral</span> ≥2% reply rate or ≥0.5% positive rate</span>'
+        + '<span class="legend-item"><span class="pill pill-bad">Bad</span> Below all thresholds (min. 50 campaigns)</span>'
+        + '<span class="legend-title" style="margin-left:8px;">Recommendation:</span>'
+        + '<span class="legend-item"><span class="pill pill-scale">Scale</span> Performance is strong — keep going</span>'
+        + '<span class="legend-item"><span class="pill pill-fix">Fix</span> Needs improvement before scaling</span>'
+        + '<span class="legend-item"><span class="pill pill-pause">Pause</span> Poor performance — stop using</span>'
+        + '</div>';
+    }
+
+    function renderPBLegend() {
+      return '<div class="legend-bar">'
+        + '<span class="legend-title">Email Status:</span>'
+        + '<span class="legend-item"><span class="badge-healthy" style="display:inline-block;padding:2px 8px;border-radius:20px;background:#d4f5ea;color:#0e6e47;font-size:10px;font-weight:600;">Healthy</span> Email used fewer than 3 times</span>'
+        + '<span class="legend-item"><span class="badge-overused" style="display:inline-block;padding:2px 8px;border-radius:20px;background:#fff3cd;color:#a06800;font-size:10px;font-weight:600;">Overused</span> Email used 3 or more times — may affect deliverability</span>'
+        + '<span class="legend-item"><span style="display:inline-block;width:12px;height:12px;background:#fff5f3;border:1px solid #c0341a;border-radius:2px;vertical-align:middle;margin-right:2px;"></span> Red rows = 0% reply rate (needs attention)</span>'
+        + '</div>';
     }
 
     function pbStat(label, value) {
@@ -1705,27 +1735,26 @@ function selectPBFromProspectors(name) {
     if (!nicheMap[niche]) nicheMap[niche] = { niche: niche, sent: 0, launchEmails: 0, replies: 0, positive: 0, negative: 0 };
     nicheMap[niche].sent++;
     nicheMap[niche].launchEmails += (c.launchEmails || 0);
-    var st = String(c.status || '').toLowerCase();
-    if (st === 'completed') nicheMap[niche].replies++;
-    if (st === 'active')    nicheMap[niche].positive++;
+    nicheMap[niche].positive     += (c.positiveResponses || 0);
+    nicheMap[niche].negative     += (c.negativeResponses || 0);
+    nicheMap[niche].replies      += (c.positiveResponses || 0) + (c.negativeResponses || 0);
   });
   var nicheRows = Object.keys(nicheMap).map(function(n) {
     var r = nicheMap[n];
-    r.negative = Math.max(0, r.sent - r.replies - r.positive);
-    r.replyRate = r.sent ? Math.round((r.replies / r.sent) * 100) : 0;
+    r.replyRate = r.launchEmails ? parseFloat((r.replies / r.launchEmails * 100).toFixed(1)) : 0;
     return r;
   }).sort(function(a, b) { return b.sent - a.sent; });
 
-  // Build email rows from campaign emailAddress field
+  // Build email rows
   var emailMap = {};
   campaigns.forEach(function(c) {
     var email = String(c.emailAddress || '').trim();
     if (!email) return;
-    if (!emailMap[email]) emailMap[email] = { emailAddress: email, timesUsed: 0, nicheSet: {}, replies: 0, sent: 0 };
+    if (!emailMap[email]) emailMap[email] = { emailAddress: email, timesUsed: 0, nicheSet: {}, replies: 0, launchEmails: 0 };
     emailMap[email].timesUsed++;
-    emailMap[email].sent++;
+    emailMap[email].launchEmails += (c.launchEmails || 0);
     if (c.niche) emailMap[email].nicheSet[c.niche] = true;
-    if (String(c.status || '').toLowerCase() === 'completed') emailMap[email].replies++;
+    emailMap[email].replies += (c.positiveResponses || 0) + (c.negativeResponses || 0);
   });
   var emailRows = Object.keys(emailMap).map(function(email) {
     var e = emailMap[email];
@@ -1733,7 +1762,7 @@ function selectPBFromProspectors(name) {
       emailAddress: e.emailAddress,
       timesUsed: e.timesUsed,
       niches: Object.keys(e.nicheSet).sort().join(', '),
-      replyRate: e.sent ? Math.round((e.replies / e.sent) * 100) : 0,
+      replyRate: e.launchEmails ? parseFloat((e.replies / e.launchEmails * 100).toFixed(1)) : 0,
       overused: e.timesUsed >= 3
     };
   }).sort(function(a, b) { return b.timesUsed - a.timesUsed; });
